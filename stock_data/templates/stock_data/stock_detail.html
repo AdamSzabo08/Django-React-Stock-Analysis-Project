@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ stock.name }}</title>
+</head>
+<body>
+    <h1>{{ stock.name }} ({{ stock.symbol }})</h1>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Open</th>
+            <th>Close</th>
+            <th>High</th>
+            <th>Low</th>
+            <th>Volume</th>
+        </tr>
+        {% for price in stock_prices %}
+        <tr>
+            <td>{{ price.date }}</td>
+            <td>{{ price.open_price }}</td>
+            <td>{{ price.close_price }}</td>
+            <td>{{ price.high_price }}</td>
+            <td>{{ price.low_price }}</td>
+            <td>{{ price.volume }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
