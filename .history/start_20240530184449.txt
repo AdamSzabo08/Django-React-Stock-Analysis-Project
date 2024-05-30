@@ -1,4 +1,6 @@
 GitHub:
+# Add specific file
+git add path/to/your/file.py
 
 # Or add all changes
 git add .
