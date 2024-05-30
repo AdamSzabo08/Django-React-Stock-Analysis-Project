@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock List</title>
+</head>
+<body>
+    <h1>Stocks</h1>
+    <ul>
+        {% for stock in stocks %}
+            <li><a href="{% url 'stock_detail' stock.symbol %}">{{ stock.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

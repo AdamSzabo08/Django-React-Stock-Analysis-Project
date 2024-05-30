@@ -8,10 +8,11 @@
     <ul>
       {% for stock in stocks %}
       <li>
+        <!-- A stock-item osztályt használjuk a két elem egymás mellé rendezéséhez -->
         <div class="stock-item">
           <a href="{% url 'stock_detail' stock.symbol %}">{{ stock.name }}</a>
-          <a href="{% url 'stock_analysis' stock.symbol %}">
-            - Stock Analysis</a
+          <a href="{% url 'stock_analysis' stock.symbol %}"
+            ><p>Stock Analysis</p></a
           >
         </div>
       </li>
