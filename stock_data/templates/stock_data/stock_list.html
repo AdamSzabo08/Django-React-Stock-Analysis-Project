@@ -1,21 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="hu">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stock List</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      h1 {
+        color: #333;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .stock-item {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .stock-item a {
+        text-decoration: none;
+        color: #007bff;
+        margin: 0 5px;
+      }
+      .stock-item a:hover {
+        text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
-    <h1>Stocks</h1>
-    <ul>
-      {% for stock in stocks %}
-      <li>
-        <div class="stock-item">
-          <a href="{% url 'stock_detail' stock.symbol %}">{{ stock.name }}</a>
-          <a href="{% url 'stock_analysis' stock.symbol %}">
-            - Stock Analysis</a
-          >
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
+    <div class="container">
+      <h1>Stocks</h1>
+      <ul>
+        {% for stock in stocks %}
+        <li>
+          <div class="stock-item">
+            <a href="{% url 'stock_detail' stock.symbol %}">{{ stock.name }}</a>
+            <a href="{% url 'stock_analysis' stock.symbol %}">- Stock Analysis</a>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
   </body>
 </html>

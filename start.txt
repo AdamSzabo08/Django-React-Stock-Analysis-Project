@@ -1,3 +1,5 @@
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 GitHub:
 
 # Or add all changes
@@ -10,7 +12,10 @@ git pull origin main --rebase
 
 git push origin main
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+git pull origin main
+git pull origin master
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -30,3 +35,11 @@ python manage.py fetch_stock_data
 
 python manage.py runserver  
 PS C:\Users\Adel\Desktop\sajat\Django - Stoc Data Analisys\stock_analysis_project> python manage.py runserver 
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+python manage.py fetch_stock_data MSFT "Microsoft Corporation"
+python manage.py fetch_stock_data AAPL "Apple Inc."
+python manage.py fetch_stock_data AMZN "Amazon.com Inc."
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
