@@ -25,6 +25,7 @@
             border-collapse: collapse;
             background-color: #fff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
         }
         th, td {
             padding: 12px;
@@ -37,10 +38,52 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        #stockChart {
+            width: 100%;
+            max-width: 900px;
+            max-height: 400px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
 <body>
     <h1>{{ stock.name }} ({{ stock.symbol }})</h1>
+    
+    <canvas id="stockChart"></canvas>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var ctx = document.getElementById('stockChart').getContext('2d');
+            var stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ dates|safe }},
+                    datasets: [{
+                        label: 'Closing Price',
+                        data: {{ close_prices|safe }},
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                tooltipFormat: 'MMM dd, yyyy'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
     <table>
         <tr>
             <th>Date</th>
