@@ -49,6 +49,7 @@
         {% for stock in stocks %}
         <li>
           <div class="stock-item">
+            <a href="{% url 'stock_detail' stock.symbol %}">{{ stock.symbol }}</a>
             <a href="{% url 'stock_detail' stock.symbol %}">{{ stock.name }}</a>
             <a href="{% url 'stock_analysis' stock.symbol %}">- Stock Analysis</a>
           </div>
