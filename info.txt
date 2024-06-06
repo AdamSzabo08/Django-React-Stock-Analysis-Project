@@ -1,0 +1,221 @@
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+GitHub:
+
+# Or add all changes
+git add .
+
+bash
+git commit -m "Describe the changes you made"
+
+git pull origin main --rebase
+
+git push origin main
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+git pull origin main
+git pull origin master
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Start:
+
+
+!!!
+cd stock_analysis_project
+!!!
+
+
+python manage.py makemigrations
+
+python manage.py migrate    
+
+python manage.py fetch_stock_data
+
+python manage.py runserver  
+PS C:\Users\Adel\Desktop\sajat\Django - Stoc Data Analisys\stock_analysis_project> python manage.py runserver 
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+python manage.py fetch_stock_data MSFT "Microsoft Corporation"
+python manage.py fetch_stock_data AAPL "Apple Inc."
+python manage.py fetch_stock_data AMZN "Amazon.com Inc."
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+stock_analysis_project/
+├── manage.py
+├── stock_analysis_project/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py:
+            from django.contrib import admin
+            from django.urls import include, path
+
+            urlpatterns = [
+                path('admin/', admin.site.urls),
+                path('', include('stock_data.urls')),
+            ]
+│   └── wsgi.py
+└── stock_data/
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── management/
+    │   └── commands/
+    │       └── fetch_stock_data.py
+    ├── migrations/
+    ├── models.py
+    ├── templates/
+    │   └── stock_data/
+    │       └── stock_analysis.html
+    │       └── stock_detail.html
+    │       └── stock_list.html
+    ├── tests.py
+    ├── urls.py
+    └── views.py
+
+
+    stock_analysis_project/
+├── manage.py
+├── stock_analysis_project/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── stock_data/
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py:
+            from django.apps import AppConfig
+
+
+            class StockDataConfig(AppConfig):
+                default_auto_field = 'django.db.models.BigAutoField'
+                name = 'stock_data'
+    ├── management/
+    │   └── commands/
+    │       └── fetch_stock_data.py:
+                    import requests
+                    from django.core.management.base import BaseCommand
+                    from stock_data.models import Stock, StockPrice
+
+                    class Command(BaseCommand):
+                        help = 'Fetch stock data from API'
+
+                        def add_arguments(self, parser):
+                            parser.add_argument('symbol', type=str, help='Stock symbol to fetch data for')
+                            parser.add_argument('name', type=str, help='Name of the stock')
+
+                        def handle(self, *args, **kwargs):
+                            API_KEY = '6N1KQG6J4CUBF4O0'
+                            STOCK_SYMBOL = kwargs['symbol']
+                            STOCK_NAME = kwargs['name']
+                            
+                            url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={STOCK_SYMBOL}&apikey={API_KEY}'
+                            response = requests.get(url)
+                            data = response.json()
+                            
+                            stock, created = Stock.objects.get_or_create(symbol=STOCK_SYMBOL, defaults={'name': STOCK_NAME})
+                            time_series = data['Time Series (Daily)']
+                            
+                            for date, values in time_series.items():
+                                StockPrice.objects.update_or_create(
+                                    stock=stock,
+                                    date=date,
+                                    defaults={
+                                        'open_price': values['1. open'],
+                                        'close_price': values['4. close'],
+                                        'high_price': values['2. high'],
+                                        'low_price': values['3. low'],
+                                        'volume': values['5. volume']
+                                    }
+                                )
+
+                            self.stdout.write(self.style.SUCCESS(f'Successfully fetched data for {STOCK_SYMBOL} ({STOCK_NAME})'))
+    ├── migrations/
+    ├── models.py:
+            from django.db import models
+
+            class Stock(models.Model):
+                symbol = models.CharField(max_length=10, unique=True)
+                name = models.CharField(max_length=100)
+
+                def __str__(self):
+                    return self.name
+
+            class StockPrice(models.Model):
+                stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
+                date = models.DateField()
+                open_price = models.FloatField()
+                close_price = models.FloatField()
+                high_price = models.FloatField()
+                low_price = models.FloatField()
+                volume = models.BigIntegerField()
+
+                class Meta:
+                    unique_together = ('stock', 'date')
+
+                def __str__(self):
+                    return f"{self.stock.symbol} on {self.date}"
+    ├── templates/
+    │   └── stock_data/
+    │       └── stock_analysis.html
+    │       └── stock_detail.html
+    │       └── stock_list.html
+    ├── tests.py
+    ├── urls.py:
+            from django.urls import path
+            from . import views
+
+            urlpatterns = [
+                path('', views.stock_list, name='stock_list'),
+                path('stocks/<str:symbol>/', views.stock_detail, name='stock_detail'),
+                path('stocks/<str:symbol>/analysis/', views.stock_analysis, name='stock_analysis'),
+            ]
+    └── views.py:
+            from django.shortcuts import render, get_object_or_404
+            from django.db.models import Avg, Max, Min, Sum
+            from .models import Stock, StockPrice
+
+            def stock_list(request):
+                stocks = Stock.objects.all()
+                return render(request, 'stock_data/stock_list.html', {'stocks': stocks})
+
+            def stock_detail(request, symbol):
+                stock = get_object_or_404(Stock, symbol=symbol)
+                stock_prices = StockPrice.objects.filter(stock=stock).order_by('-date')
+                
+                dates = [price.date.strftime('%Y-%m-%d') for price in stock_prices]
+                close_prices = [price.close_price for price in stock_prices]
+                
+                context = {
+                    'stock': stock,
+                    'stock_prices': stock_prices,
+                    'dates': dates,
+                    'close_prices': close_prices
+                }
+                
+                return render(request, 'stock_data/stock_detail.html', context)
+
+            def stock_analysis(request, symbol):
+                stock = get_object_or_404(Stock, symbol=symbol)
+                stock_prices = StockPrice.objects.filter(stock=stock)
+                
+                average_close = stock_prices.aggregate(Avg('close_price'))['close_price__avg']
+                highest_close = stock_prices.aggregate(Max('close_price'))['close_price__max']
+                lowest_close = stock_prices.aggregate(Min('close_price'))['close_price__min']
+                average_volume = stock_prices.aggregate(Avg('volume'))['volume__avg']
+                
+                context = {
+                    'stock': stock,
+                    'average_close': average_close,
+                    'highest_close': highest_close,
+                    'lowest_close': lowest_close,
+                    'average_volume': average_volume
+                }
+                
+                return render(request, 'stock_data/stock_analysis.html', context)
