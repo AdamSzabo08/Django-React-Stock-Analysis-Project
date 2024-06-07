@@ -5,8 +5,7 @@ GitHub:
 # Or add all changes
 git add .
 
-bash
-git commit -m "Describe the changes you made"
+git commit -m "Update"
 
 git pull origin main --rebase
 
@@ -51,13 +50,6 @@ stock_analysis_project/
 │   ├── asgi.py
 │   ├── settings.py
 │   ├── urls.py:
-            from django.contrib import admin
-            from django.urls import include, path
-
-            urlpatterns = [
-                path('admin/', admin.site.urls),
-                path('', include('stock_data.urls')),
-            ]
 │   └── wsgi.py
 └── stock_data/
     ├── __init__.py
