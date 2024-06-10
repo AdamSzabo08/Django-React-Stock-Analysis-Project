@@ -76,3 +76,288 @@ stock_analysis_project/
     ├── tests.py
     ├── urls.py
     └── views.py
+
+
+    stock_analysis_project/
+├── manage.py
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   └── App.css
+│   │   └── App.js:
+            import React from 'react';
+            import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+            import StockList from './StockList';
+            import StockDetail from './StockDetail';
+            import StockAnalysis from './StockAnalysis';
+            import './App.css';
+
+            function App() {
+            return (
+                <Router>
+                <div>
+                    <nav>
+                    <Link to="/" className="home-button">Home</Link>
+                    </nav>
+                    <Routes>
+                    <Route path="/" element={<StockList />} />
+                    <Route path="/stocks/:symbol" element={<StockDetail />} />
+                    <Route path="/stocks/:symbol/analysis" element={<StockAnalysis />} />
+                    </Routes>
+                </div>
+                </Router>
+            );
+            }
+
+            export default App;
+│   │   └── StockAnalysis.js:
+                import React, { useState, useEffect } from 'react';
+                import { useParams } from 'react-router-dom';
+                import axios from 'axios';
+                import './App.css';
+
+                function StockAnalysis() {
+                const { symbol } = useParams();
+                const [analysis, setAnalysis] = useState(null);
+
+                useEffect(() => {
+                    axios.get(`http://localhost:8000/stocks/${symbol}/analysis/`)
+                    .then(response => {
+                        setAnalysis(response.data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching stock analysis:', error);
+                    });
+                }, [symbol]);
+
+                if (!analysis) return <div className="loading">Loading...</div>;
+
+                return (
+                    <div className="container">
+                    <h1 className="heading">{analysis.stock.name} ({analysis.stock.symbol}) - Stock Analysis</h1>
+                    <div className="analysis-container">
+                        <div className="analysis-item">
+                        <strong>Average Closing Price:</strong> {analysis.average_close.toFixed(2)}
+                        </div>
+                        <div className="analysis-item">
+                        <strong>Highest Closing Price:</strong> {analysis.highest_close.toFixed(2)}
+                        </div>
+                        <div className="analysis-item">
+                        <strong>Lowest Closing Price:</strong> {analysis.lowest_close.toFixed(2)}
+                        </div>
+                        <div className="analysis-item">
+                        <strong>Average Volume:</strong> {analysis.average_volume.toFixed(0)}
+                        </div>
+                    </div>
+                    </div>
+                );
+                }
+
+                export default StockAnalysis;
+│   │   └── StockDetail.js:
+                import React, { useState, useEffect } from 'react';
+                import { useParams, Link } from 'react-router-dom';
+                import axios from 'axios';
+                import { Line } from 'react-chartjs-2';
+                import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+                import './App.css';
+
+                ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+                function StockDetail() {
+                const { symbol } = useParams();
+                const [stockDetail, setStockDetail] = useState(null);
+
+                useEffect(() => {
+                    axios.get(`http://localhost:8000/stocks/${symbol}/`)
+                    .then(response => {
+                        setStockDetail(response.data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching stock detail:', error);
+                    });
+                }, [symbol]);
+
+                if (!stockDetail) return <div className="loading">Loading...</div>;
+
+                // Reverse the stock_prices array to have the dates in ascending order
+                const reversedStockPrices = [...stockDetail.stock_prices].reverse();
+
+                const data = {
+                    labels: reversedStockPrices.map(price => price.date),
+                    datasets: [
+                    {
+                        label: 'Close Price',
+                        data: reversedStockPrices.map(price => price.close_price),
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        fill: true,
+                    },
+                    ],
+                };
+
+                const options = {
+                    responsive: true,
+                    plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: `${stockDetail.stock.name} (${stockDetail.stock.symbol}) Price Chart`,
+                    },
+                    },
+                    scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Date',
+                        },
+                    },
+                    y: {
+                        title: {
+                        display: true,
+                        text: 'Close Price',
+                        },
+                    },
+                    },
+                };
+
+                return (
+                    <div className="container">
+                    <h1 className="heading">{stockDetail.stock.name} ({stockDetail.stock.symbol}) - Stock Detail</h1>
+                    <Link to={`/stocks/${symbol}/analysis`} className="view-analysis-link">View Analysis</Link>
+                    <div className="chart-container">
+                        <Line data={data} options={options} />
+                    </div>
+                    <ul className="list">
+                        {reversedStockPrices.map(price => (
+                        <li key={price.date} className="list-item">
+                            Date: {price.date}, Close: {price.close_price}
+                        </li>
+                        ))}
+                    </ul>
+                    </div>
+                );
+                }
+
+                export default StockDetail;
+│   │   └── StockList.js:
+                import React, { useState, useEffect } from 'react';
+                import { Link } from 'react-router-dom';
+                import axios from 'axios';
+                import './App.css';
+
+                function StockList() {
+                const [stocks, setStocks] = useState([]);
+
+                useEffect(() => {
+                    axios.get('http://localhost:8000/stocks/')
+                    .then(response => {
+                        setStocks(response.data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching stocks:', error);
+                    });
+                }, []);
+
+                return (
+                    <div className="container">
+                    <h1 className="heading">Stock List</h1>
+                    <ul className="list">
+                        {stocks.map(stock => (
+                        <li key={stock.id} className="list-item">
+                            <Link to={`/stocks/${stock.symbol}`} className="link">
+                            {stock.name} - {stock.symbol}
+                            </Link>
+                        </li>
+                        ))}
+                    </ul>
+                    </div>
+                );
+                }
+
+                export default StockList;
+│   ├── .gitignore
+│   ├── package-lock.json
+│   └── package.json
+├── stock_analysis_project/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── stock_data/
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── management/
+    │   └── commands/
+    │       └── fetch_stock_data.py:
+                    import requests
+                    from django.core.management.base import BaseCommand
+                    from stock_data.models import Stock, StockPrice
+
+                    class Command(BaseCommand):
+                        help = 'Fetch stock data from API'
+
+                        def add_arguments(self, parser):
+                            parser.add_argument('symbol', type=str, help='Stock symbol to fetch data for')
+                            parser.add_argument('name', type=str, help='Name of the stock')
+
+                        def handle(self, *args, **kwargs):
+                            API_KEY = '6N1KQG6J4CUBF4O0'
+                            STOCK_SYMBOL = kwargs['symbol']
+                            STOCK_NAME = kwargs['name']
+                            
+                            url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={STOCK_SYMBOL}&apikey={API_KEY}'
+                            response = requests.get(url)
+                            data = response.json()
+                            
+                            stock, created = Stock.objects.get_or_create(symbol=STOCK_SYMBOL, defaults={'name': STOCK_NAME})
+                            time_series = data['Time Series (Daily)']
+                            
+                            for date, values in time_series.items():
+                                StockPrice.objects.update_or_create(
+                                    stock=stock,
+                                    date=date,
+                                    defaults={
+                                        'open_price': values['1. open'],
+                                        'close_price': values['4. close'],
+                                        'high_price': values['2. high'],
+                                        'low_price': values['3. low'],
+                                        'volume': values['5. volume']
+                                    }
+                                )
+
+                            self.stdout.write(self.style.SUCCESS(f'Successfully fetched data for {STOCK_SYMBOL} ({STOCK_NAME})'))
+    ├── migrations/
+    ├── models.py:
+            from django.db import models
+
+            class Stock(models.Model):
+                symbol = models.CharField(max_length=10, unique=True)
+                name = models.CharField(max_length=100)
+
+                def __str__(self):
+                    return self.name
+
+            class StockPrice(models.Model):
+                stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
+                date = models.DateField()
+                open_price = models.FloatField()
+                close_price = models.FloatField()
+                high_price = models.FloatField()
+                low_price = models.FloatField()
+                volume = models.BigIntegerField()
+
+                class Meta:
+                    unique_together = ('stock', 'date')
+
+                def __str__(self):
+                    return f"{self.stock.symbol} on {self.date}"
+    ├── templates/
+    │   └── stock_data/
+    ├── tests.py
+    ├── urls.py
+    └── views.py
