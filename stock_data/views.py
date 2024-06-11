@@ -6,6 +6,7 @@ from django.core.management import call_command
 from .models import Stock, StockPrice
 import json
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -52,23 +53,26 @@ def add_stock(request):
             data = json.loads(request.body)
             logger.debug(f'Received data: {data}')
             symbol = data.get('symbol')
-            name = data.get('name')
 
-            if not symbol or not name:
-                logger.error('Missing symbol or name')
-                return JsonResponse({'error': 'Missing symbol or name'}, status=400)
+            if not symbol:
+                logger.error('Missing symbol')
+                return JsonResponse({'error': 'Missing symbol'}, status=400)
 
-            stock, created = Stock.objects.get_or_create(symbol=symbol, defaults={'name': name})
-            logger.debug(f'Stock created: {created}, Stock: {stock}')
+            stock, created = Stock.objects.get_or_create(symbol=symbol, defaults={'name': ''})
 
             if created:
                 try:
-                    logger.debug(f'Calling fetch_stock_data for symbol: {symbol}, name: {name}')
-                    call_command('fetch_stock_data', symbol=symbol, name=name)
-                    logger.debug(f'Successfully fetched data for {symbol}')
+                    logger.debug(f'Calling fetch_stock_data for symbol: {symbol}')
+                    call_command('fetch_stock_data', symbol=symbol)
+                    stock.refresh_from_db()
+                    if stock.name == '':
+                        logger.error('Failed to fetch stock data')
+                        stock.delete()
+                        return JsonResponse({'error': 'Error fetching stock data'}, status=500)
                     return JsonResponse({'message': 'Stock added and data fetched successfully'}, status=201)
                 except Exception as e:
-                    logger.error(f'Error fetching stock data for {symbol}: {str(e)}')
+                    logger.error(f'Error fetching stock data: {str(e)}')
+                    stock.delete()
                     return JsonResponse({'error': f'Error fetching stock data: {str(e)}'}, status=500)
             else:
                 logger.error('Stock already exists')

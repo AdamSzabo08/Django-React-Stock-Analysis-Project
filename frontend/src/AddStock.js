@@ -4,12 +4,11 @@ import './App.css';
 
 function AddStock() {
   const [symbol, setSymbol] = useState('');
-  const [name, setName] = useState('');
   const [message, setMessage] = useState('');
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    axios.post('http://localhost:8000/add_stock/', { symbol, name })
+    axios.post('http://localhost:8000/add_stock/', { symbol })
       .then(response => {
         setMessage('Stock added successfully');
       })
@@ -28,15 +27,6 @@ function AddStock() {
             type="text"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Name:</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
             required
           />
         </div>
